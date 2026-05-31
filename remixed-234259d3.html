@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluation Companion - Interactive Prototype</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+    
+    .prototype-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .prototype-header {
+      margin-bottom: 32px;
+    }
+    
+    .prototype-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .prototype-header p {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    
+    .state-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .state-button {
+      padding: 8px 16px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: white;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .state-button:hover {
+      background: #f9fafb;
+    }
+    
+    .state-button.active {
+      background: #1fb1da;
+      color: white;
+      border-color: #1fb1da;
+    }
+    
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      min-height: 600px;
+    }
+    
+    .answer-panel {
+      padding: 32px;
+      border-right: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .query-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .answer-text {
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    
+    .citations {
+      margin-top: 32px;
+    }
+    
+    .citations-title {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    
+    .citation {
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .citation:hover {
+      background: #f9fafb;
+      border-color: #1fb1da;
+    }
+    
+    .citation.highlighted {
+      background: #e0f2fe;
+      border-color: #0284c7;
+    }
+    
+    .citation-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e0f2fe;
+      border: 1.5px solid #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #0284c7;
+      flex-shrink: 0;
+    }
+    
+    .citation-content {
+      flex: 1;
+    }
+    
+    .citation-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .citation-meta {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    .evaluation-panel {
+      background: #fafafa;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    
+    .eval-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .eval-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .collapse-btn {
+      font-size: 11px;
+      color: #6b7280;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    
+    .collapse-btn:hover {
+      color: #1a1a1a;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    
+    .signal-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .signal-card:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .signal-card.expanded {
+      border-width: 2px;
+    }
+    
+    .signal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .signal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .signal-dot.strength { background: #10b981; }
+    .signal-dot.uncertainty { background: #f59e0b; }
+    .signal-dot.gap { background: #ef4444; }
+    .signal-dot.assumption { background: #8b5cf6; }
+    
+    .signal-title {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+    }
+    
+    .signal-body {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      display: none;
+    }
+    
+    .signal-card.expanded .signal-body {
+      display: block;
+    }
+    
+    .signal-body.strength { background: #d1fae5; padding: 12px; border-radius: 6px; }
+    .signal-body.uncertainty { background: #fef3c7; padding: 12px; border-radius: 6px; }
+    .signal-body.gap { background: #fee2e2; padding: 12px; border-radius: 6px; }
+    .signal-body.assumption { background: #ede9fe; padding: 12px; border-radius: 6px; }
+    
+    .signal-body.strength .signal-text { color: #065f46; }
+    .signal-body.uncertainty .signal-text { color: #92400e; }
+    .signal-body.gap .signal-text { color: #991b1b; }
+    .signal-body.assumption .signal-text { color: #5b21b6; }
+    
+    .signal-text {
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .signal-explain {
+      font-size: 11px;
+      text-decoration: underline;
+      cursor: pointer;
+      opacity: 0.8;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    
+    .dialogue-section {
+      margin-top: 24px;
+    }
+    
+    .dialogue-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .dialogue-prompt {
+      font-size: 13px;
+      margin-bottom: 16px;
+      color: #374151;
+    }
+    
+    .prompt-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .prompt-button {
+      padding: 10px 16px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: white;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #374151;
+    }
+    
+    .prompt-button:hover {
+      background: #f9fafb;
+      border-color: #1fb1da;
+    }
+    
+    .prompt-button.selected {
+      background: #e0f2fe;
+      border-color: #0284c7;
+      color: #0284c7;
+    }
+    
+    .skip-link {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    
+    .skip-link:hover {
+      color: #1a1a1a;
+    }
+    
+    .analysis-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .analysis-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #1fb1da;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    .analysis-text {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+    
+    .findings {
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+    
+    .findings-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+    
+    .findings-text {
+      font-size: 12px;
+      color: #92400e;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .findings-action {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .findings-button {
+      padding: 6px 12px;
+      border: 1px solid #92400e;
+      background: white;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #92400e;
+    }
+    
+    .findings-button:hover {
+      background: #fef3c7;
+    }
+    
+    .notes-section {
+      margin-top: 24px;
+    }
+    
+    .notes-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .notes-header {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    
+    .note-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    
+    .note-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    
+    .note-icon.check { background: #d1fae5; color: #065f46; }
+    .note-icon.warning { background: #fef3c7; color: #92400e; }
+    
+    .note-content {
+      flex: 1;
+    }
+    
+    .note-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .note-detail {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    .confidence-section {
+      margin-top: 24px;
+    }
+    
+    .confidence-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .confidence-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    
+    .slider-container {
+      margin-bottom: 12px;
+    }
+    
+    .slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e7eb;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1fb1da;
+      cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1fb1da;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .confidence-value {
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    
+    .confidence-meaning {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+    }
+    
+    .action-button {
+      width: 100%;
+      padding: 12px;
+      background: #1fb1da;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.2s;
+    }
+    
+    .action-button:hover {
+      background: #1a9bc4;
+    }
+    
+    .empty-state {
+      font-size: 13px;
+      color: #6b7280;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .answer-panel {
+        border-right: none;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-container">
+    <div class="prototype-header">
+      <h1>Evaluation Companion - Interactive Prototype</h1>
+      <p>Click through different states to see how the feature works</p>
+    </div>
+    
+    <div class="state-selector">
+      <button class="state-button active" onclick="showState('initial')">Initial State</button>
+      <button class="state-button" onclick="showState('dialogue')">Dialogue Active</button>
+      <button class="state-button" onclick="showState('analysis')">Analysis Running</button>
+      <button class="state-button" onclick="showState('summary')">Evaluation Complete</button>
+    </div>
+    
+    <div class="app-container">
+      <!-- Left Panel: Answer -->
+      <div class="answer-panel">
+        <div class="query-header">
+          What are global FinTech funding trends in Q3 2024?
+        </div>
+        
+        <div class="answer-text">
+          According to recent reports, global FinTech funding declined 23% year-over-year in Q3 2024, with total investments reaching $18.2 billion across 1,234 deals. This represents a continued slowdown from 2023's peak, though deal volume remained relatively stable compared to Q2 2024.
+          <br><br>
+          The decline is attributed to several factors, including macroeconomic uncertainty, rising interest rates, and increased regulatory scrutiny. Despite the overall decrease, certain sectors like embedded finance and B2B payments showed resilience.
+        </div>
+        
+        <div class="citations">
+          <div class="citations-title">Sources</div>
+          
+          <div class="citation" id="citation-1" onclick="highlightCitation(1)">
+            <div class="citation-number">1</div>
+            <div class="citation-content">
+              <div class="citation-title">TechCrunch: FinTech Funding Drops 23% in Q3</div>
+              <div class="citation-meta">Published Oct 15, 2024 • techcrunch.com</div>
+            </div>
+          </div>
+          
+          <div class="citation" id="citation-2" onclick="highlightCitation(2)">
+            <div class="citation-number">2</div>
+            <div class="citation-content">
+              <div class="citation-title">Crunchbase: Q3 2024 Global FinTech Report</div>
+              <div class="citation-meta">Published Oct 12, 2024 • crunchbase.com</div>
+            </div>
+          </div>
+          
+          <div class="citation" id="citation-3" onclick="highlightCitation(3)">
+            <div class="citation-number">3</div>
+            <div class="citation-content">
+              <div class="citation-title">CB Insights: State of FinTech Q3 2024</div>
+              <div class="citation-meta">Published Oct 18, 2024 • cbinsights.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Panel: Evaluation Companion -->
+      <div class="evaluation-panel" id="eval-panel">
+        <div class="eval-header">
+          <h2>Evaluation Companion</h2>
+          <button class="collapse-btn">Collapse</button>
+        </div>
+        
+        <!-- Quality Signals -->
+        <div class="section-title">Quality Signals</div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot strength"></div>
+            <div class="signal-title">Strong source consensus (2)</div>
+          </div>
+          <div class="signal-body strength">
+            <div class="signal-text">
+              7 out of 8 sources agree on the 23% decline figure. High confidence in this claim.
+            </div>
+            <div class="signal-text">
+              All major industry publications (TechCrunch, Crunchbase, CB Insights) report consistent numbers within 1-2% margin.
+            </div>
+            <span class="signal-explain">How was this detected?</span>
+          </div>
+        </div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot uncertainty"></div>
+            <div class="signal-title">One source uses preliminary data</div>
+          </div>
+          <div class="signal-body uncertainty">
+            <div class="signal-text">
+              CB Insights Q3 report noted as "early estimates" - final numbers may be revised when complete data becomes available in early Q4.
+            </div>
+            <span class="signal-explain">How was this detected?</span>
+          </div>
+        </div>
+        
+        <div class="signal-card expanded" onclick="toggleSignal(this)" id="gap-signal">
+          <div class="signal-header">
+            <div class="signal-dot gap"></div>
+            <div class="signal-title">Missing European data coverage</div>
+          </div>
+          <div class="signal-body gap">
+            <div class="signal-text">
+              Analysis limited to North American sources. Searched 12 European FinTech databases but found limited Q3 2024 data.
+            </div>
+            <div class="signal-text">
+              This suggests either data is not yet publicly available, or regional reporting lags North America by 1-2 quarters.
+            </div>
+            <span class="signal-explain">How was this detected?</span>
+          </div>
+        </div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot assumption"></div>
+            <div class="signal-title">Assumes US market definition</div>
+          </div>
+          <div class="signal-body assumption">
+            <div class="signal-text">
+              Sources primarily define "global FinTech" based on US market categorization. European and Asian markets may categorize companies differently.
+            </div>
+            <span class="signal-explain">How was this detected?</span>
+          </div>
+        </div>
+        
+        <!-- Dialogue Section -->
+        <div class="dialogue-section" id="dialogue-section">
+          <div class="section-title">Evaluation</div>
+          
+          <div class="dialogue-card">
+            <div class="dialogue-prompt">💬 Before using this, what's your main concern?</div>
+            
+            <div class="prompt-options">
+              <button class="prompt-button" onclick="selectConcern('source')">Source quality</button>
+              <button class="prompt-button" onclick="selectConcern('completeness')">Completeness</button>
+              <button class="prompt-button" onclick="selectConcern('accuracy')">Accuracy</button>
+              <button class="prompt-button" onclick="selectConcern('recency')">Recency</button>
+            </div>
+            
+            <div class="skip-link" onclick="skipEvaluation()">Skip evaluation for now</div>
+            
+            <!-- Analysis Section (hidden initially) -->
+            <div class="analysis-section" id="analysis-section" style="display: none;">
+              <div class="analysis-label">Analyzing completeness...</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <div class="analysis-text" id="analysis-text">Searching additional sources...</div>
+            </div>
+            
+            <!-- Findings Section (hidden initially) -->
+            <div id="findings-section" style="display: none;">
+              <div class="findings">
+                <div class="findings-title">✓ Completeness Analysis</div>
+                <div class="findings-text">
+                  I searched 12 European FinTech databases (PitchBook EU, Tech.eu, Sifted) but found limited Q3 2024 data. Only 2 sources had preliminary estimates.
+                </div>
+                <div class="findings-text">
+                  <strong>This suggests:</strong> European data may not be public yet, or regional reporting lags North America by 1-2 quarters.
+                </div>
+                <div class="findings-text">
+                  <strong>Recommendation:</strong> For client work, note this as US-focused analysis with European caveat.
+                </div>
+                <div class="findings-action">
+                  <button class="findings-button" onclick="addNote()">✓ Add to my notes</button>
+                  <button class="findings-button" onclick="searchMore()">Search more</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Notes Section -->
+        <div class="notes-section" id="notes-section">
+          <div class="notes-card">
+            <div class="notes-header">Your Evaluation Notes (0)</div>
+            <div class="empty-state" id="notes-empty">Click a concern above to begin</div>
+            <div id="notes-list" style="display: none;"></div>
+          </div>
+        </div>
+        
+        <!-- Confidence Section (hidden initially) -->
+        <div class="confidence-section" id="confidence-section" style="display: none;">
+          <div class="confidence-card">
+            <div class="confidence-label">How confident are you in this answer?</div>
+            <div class="confidence-value" id="confidence-value">80%</div>
+            <div class="slider-container">
+              <input type="range" min="0" max="100" value="80" class="slider" id="confidence-slider" oninput="updateConfidence(this.value)">
+            </div>
+            <div class="confidence-meaning" id="confidence-meaning">
+              Good for internal use, needs caveats for clients
+            </div>
+          </div>
+          
+          <button class="action-button" onclick="completeEvaluation()">Continue to use answer →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let currentState = 'initial';
+    let noteCount = 0;
+    
+    function showState(state) {
+      currentState = state;
+      
+      // Update button states
+      document.querySelectorAll('.state-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Reset UI
+      document.getElementById('analysis-section').style.display = 'none';
+      document.getElementById('findings-section').style.display = 'none';
+      document.getElementById('confidence-section').style.display = 'none';
+      document.getElementById('notes-empty').style.display = 'block';
+      document.getElementById('notes-list').style.display = 'none';
+      
+      // Clear selections
+      document.querySelectorAll('.prompt-button').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      
+      if (state === 'initial') {
+        // Initial state - everything default
+        noteCount = 0;
+        updateNoteCount();
+      } else if (state === 'dialogue') {
+        // Select completeness button
+        document.querySelectorAll('.prompt-button')[1].classList.add('selected');
+      } else if (state === 'analysis') {
+        // Show analysis running
+        document.querySelectorAll('.prompt-button')[1].classList.add('selected');
+        document.getElementById('analysis-section').style.display = 'block';
+        
+        // Animate progress bar
+        let progress = 0;
+        const progressBar = document.getElementById('progress-fill');
+        const analysisText = document.getElementById('analysis-text');
+        
+        const messages = [
+          'Searching additional sources...',
+          'Cross-referencing European databases...',
+          'Analyzing data coverage...',
+          'Almost done...'
+        ];
+        
+        const interval = setInterval(() => {
+          progress += 5;
+          progressBar.style.width = progress + '%';
+          
+          if (progress % 25 === 0) {
+            analysisText.textContent = messages[Math.floor(progress / 25)];
+          }
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => showState('summary'), 500);
+          }
+        }, 100);
+      } else if (state === 'summary') {
+        // Show complete evaluation
+        document.getElementById('findings-section').style.display = 'block';
+        document.getElementById('confidence-section').style.display = 'block';
+        
+        // Add sample notes
+        noteCount = 3;
+        updateNoteCount();
+        document.getElementById('notes-empty').style.display = 'none';
+        document.getElementById('notes-list').style.display = 'block';
+        document.getElementById('notes-list').innerHTML = `
+          <div class="note-item">
+            <div class="note-icon check">✓</div>
+            <div class="note-content">
+              <div class="note-title">Verified: Source recency</div>
+              <div class="note-detail">All sources from Q3-Q4 2024</div>
+            </div>
+          </div>
+          <div class="note-item">
+            <div class="note-icon warning">⚠️</div>
+            <div class="note-content">
+              <div class="note-title">Noted: Geographic limitation</div>
+              <div class="note-detail">US-focused data, European coverage gaps. Add caveat for global use.</div>
+            </div>
+          </div>
+          <div class="note-item">
+            <div class="note-icon check">✓</div>
+            <div class="note-content">
+              <div class="note-title">Satisfied: Methodology</div>
+              <div class="note-detail">Consistent calculation methodology across sources</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    function toggleSignal(element) {
+      element.classList.toggle('expanded');
+    }
+    
+    function selectConcern(concern) {
+      if (currentState === 'initial') {
+        // Highlight selected button
+        document.querySelectorAll('.prompt-button').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        event.target.classList.add('selected');
+        
+        // Show analysis
+        setTimeout(() => {
+          showState('analysis');
+        }, 300);
+      }
+    }
+    
+    function skipEvaluation() {
+      alert('Evaluation skipped. You can evaluate this answer later from your history.');
+    }
+    
+    function addNote() {
+      noteCount++;
+      updateNoteCount();
+      document.getElementById('notes-empty').style.display = 'none';
+      document.getElementById('notes-list').style.display = 'block';
+      
+      const notesList = document.getElementById('notes-list');
+      notesList.innerHTML = `
+        <div class="note-item">
+          <div class="note-icon warning">⚠️</div>
+          <div class="note-content">
+            <div class="note-title">Noted: Geographic limitation</div>
+            <div class="note-detail">US-focused data, European coverage gaps. Add caveat for global use.</div>
+          </div>
+        </div>
+      `;
+      
+      // Show confidence section
+      document.getElementById('confidence-section').style.display = 'block';
+      
+      // Scroll to confidence section
+      document.getElementById('confidence-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    function searchMore() {
+      alert('Searching additional databases... (This would trigger a deeper search in the actual feature)');
+    }
+    
+    function updateNoteCount() {
+      document.querySelector('.notes-header').textContent = `Your Evaluation Notes (${noteCount})`;
+    }
+    
+    function updateConfidence(value) {
+      document.getElementById('confidence-value').textContent = value + '%';
+      
+      const meanings = {
+        0: 'Not confident - needs significant revision',
+        20: 'Low confidence - verify all claims',
+        40: 'Some concerns - use with caution',
+        60: 'Moderate confidence - good for research',
+        80: 'Good for internal use, needs caveats for clients',
+        100: 'High confidence - ready to use'
+      };
+      
+      // Find closest meaning
+      const closest = Object.keys(meanings).reduce((prev, curr) => 
+        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+      );
+      
+      document.getElementById('confidence-meaning').textContent = meanings[closest];
+    }
+    
+    function highlightCitation(num) {
+      // Remove all highlights
+      document.querySelectorAll('.citation').forEach(c => {
+        c.classList.remove('highlighted');
+      });
+      
+      // Add highlight
+      document.getElementById('citation-' + num).classList.add('highlighted');
+      
+      // Remove highlight after 2 seconds
+      setTimeout(() => {
+        document.getElementById('citation-' + num).classList.remove('highlighted');
+      }, 2000);
+    }
+    
+    function completeEvaluation() {
+      alert('✓ Evaluation complete! Your notes have been saved for learning and future reference.');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perplexity with Evaluation Companion</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+    
+    /* Perplexity Header */
+    .perplexity-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .perplexity-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1fb1da;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .search-container {
+      flex: 1;
+      max-width: 600px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #f9fafb;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #1fb1da;
+      background: white;
+    }
+    
+    .scenario-buttons {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    
+    .scenario-btn {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .scenario-btn:hover {
+      border-color: #1fb1da;
+      background: #f0f9ff;
+    }
+    
+    .scenario-btn.active {
+      background: #1fb1da;
+      color: white;
+      border-color: #1fb1da;
+    }
+    
+    /* Main Container */
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      height: calc(100vh - 70px);
+      overflow: hidden;
+    }
+    
+    /* Answer Panel */
+    .answer-panel {
+      padding: 32px;
+      overflow-y: auto;
+      border-right: 1px solid #e5e7eb;
+    }
+    
+    .query-section {
+      margin-bottom: 28px;
+    }
+    
+    .query-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    
+    .query-meta {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .answer-content {
+      margin-bottom: 32px;
+    }
+    
+    .answer-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+    
+    .citations {
+      margin-top: 24px;
+    }
+    
+    .citations-title {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .citation {
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .citation:hover {
+      background: #f9fafb;
+      border-color: #1fb1da;
+    }
+    
+    .citation.highlighted {
+      background: #e0f2fe;
+      border-color: #0284c7;
+    }
+    
+    .citation-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e0f2fe;
+      border: 1.5px solid #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #0284c7;
+      flex-shrink: 0;
+    }
+    
+    .citation-content h4 {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #1a1a1a;
+    }
+    
+    .citation-content p {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    /* Evaluation Panel */
+    .evaluation-panel {
+      background: #fafafa;
+      padding: 24px;
+      overflow-y: auto;
+      border-left: 1px solid #e5e7eb;
+    }
+    
+    .eval-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .eval-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .collapse-btn {
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    
+    .signal-section {
+      margin-bottom: 24px;
+    }
+    
+    .signal-section-title {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    
+    .signal-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .signal-card:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-color: #1fb1da;
+    }
+    
+    .signal-card.expanded {
+      border-width: 2px;
+      border-color: #1fb1da;
+    }
+    
+    .signal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .signal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .signal-dot.strength { background: #10b981; }
+    .signal-dot.uncertainty { background: #f59e0b; }
+    .signal-dot.gap { background: #ef4444; }
+    .signal-dot.assumption { background: #8b5cf6; }
+    
+    .signal-title {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      color: #1a1a1a;
+    }
+    
+    .signal-body {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      display: none;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    .signal-card.expanded .signal-body {
+      display: block;
+    }
+    
+    .signal-body.strength {
+      background: #d1fae5;
+      padding: 12px;
+      border-radius: 6px;
+      color: #065f46;
+    }
+    
+    .signal-body.uncertainty {
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 6px;
+      color: #92400e;
+    }
+    
+    .signal-body.gap {
+      background: #fee2e2;
+      padding: 12px;
+      border-radius: 6px;
+      color: #991b1b;
+    }
+    
+    .signal-body.assumption {
+      background: #ede9fe;
+      padding: 12px;
+      border-radius: 6px;
+      color: #5b21b6;
+    }
+    
+    .dialogue-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    
+    .dialogue-prompt {
+      font-size: 13px;
+      margin-bottom: 16px;
+      color: #374151;
+    }
+    
+    .prompt-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .prompt-btn {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #374151;
+    }
+    
+    .prompt-btn:hover {
+      border-color: #1fb1da;
+      background: #f0f9ff;
+    }
+    
+    .prompt-btn.selected {
+      background: #e0f2fe;
+      border-color: #0284c7;
+      color: #0284c7;
+    }
+    
+    .analysis-section {
+      margin-top: 16px;
+      padding: 12px;
+      background: #fef3c7;
+      border-radius: 6px;
+      display: none;
+    }
+    
+    .analysis-section.show {
+      display: block;
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #1fb1da;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    .analysis-text {
+      font-size: 12px;
+      color: #92400e;
+    }
+    
+    .skip-link {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    
+    .skip-link:hover {
+      color: #1a1a1a;
+    }
+    
+    .notes-section {
+      margin-top: 24px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .notes-title {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    
+    .note-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    
+    .note-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    
+    .note-icon.check {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .note-icon.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .note-content {
+      flex: 1;
+    }
+    
+    .note-title {
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 2px;
+    }
+    
+    .note-detail {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    .confidence-section {
+      margin-top: 24px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      display: none;
+    }
+    
+    .confidence-section.show {
+      display: block;
+    }
+    
+    .confidence-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    
+    .confidence-value {
+      font-size: 28px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 12px;
+      color: #1fb1da;
+    }
+    
+    .slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e7eb;
+      outline: none;
+      -webkit-appearance: none;
+      margin-bottom: 12px;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1fb1da;
+      cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1fb1da;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .confidence-meaning {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    
+    .action-button {
+      width: 100%;
+      padding: 12px;
+      background: #1fb1da;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.2s;
+    }
+    
+    .action-button:hover {
+      background: #1a9bc4;
+    }
+    
+    .empty-state {
+      font-size: 13px;
+      color: #6b7280;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    /* Loading State */
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 50%;
+      border-top-color: #1fb1da;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .evaluation-panel {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 60vh;
+        border-radius: 12px 12px 0 0;
+        z-index: 999;
+        overflow-y: auto;
+      }
+      
+      .evaluation-panel.mobile-open {
+        display: block;
+      }
+      
+      .scenario-buttons {
+        margin-left: 0;
+        flex-wrap: wrap;
+      }
+      
+      .answer-panel {
+        padding: 20px;
+        padding-bottom: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Perplexity Header -->
+  <div class="perplexity-header">
+    <div class="perplexity-logo">
+      🔍 Perplexity
+    </div>
+    <div class="search-container">
+      <input type="text" class="search-input" id="searchInput" placeholder="What are you curious about?" value="">
+    </div>
+    <div class="scenario-buttons">
+      <button class="scenario-btn active" onclick="loadScenario('finance')">Finance</button>
+      <button class="scenario-btn" onclick="loadScenario('medical')">Medical</button>
+      <button class="scenario-btn" onclick="loadScenario('research')">Research</button>
+    </div>
+  </div>
+  
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Answer Panel -->
+    <div class="answer-panel">
+      <div class="query-section">
+        <div class="query-text" id="queryText">What are global FinTech funding trends in Q3 2024?</div>
+        <div class="query-meta">Searched 847 sources • Generated 2.3 seconds</div>
+      </div>
+      
+      <div class="answer-content">
+        <div class="answer-text" id="answerText">
+          According to recent reports, global FinTech funding declined 23% year-over-year in Q3 2024, with total investments reaching $18.2 billion across 1,234 deals. This represents a continued slowdown from 2023's peak, though deal volume remained relatively stable compared to Q2 2024.
+          <br><br>
+          The decline is attributed to several factors, including macroeconomic uncertainty, rising interest rates, and increased regulatory scrutiny. Despite the overall decrease, certain sectors like embedded finance and B2B payments showed resilience with growth in their segments.
+        </div>
+        
+        <div class="citations">
+          <div class="citations-title">Sources</div>
+          <div class="citation" id="citation-1" onclick="highlightCitation(1)">
+            <div class="citation-number">1</div>
+            <div class="citation-content">
+              <h4>TechCrunch: FinTech Funding Drops 23% in Q3</h4>
+              <p>Published Oct 15, 2024 • techcrunch.com</p>
+            </div>
+          </div>
+          <div class="citation" id="citation-2" onclick="highlightCitation(2)">
+            <div class="citation-number">2</div>
+            <div class="citation-content">
+              <h4>Crunchbase: Q3 2024 Global FinTech Report</h4>
+              <p>Published Oct 12, 2024 • crunchbase.com</p>
+            </div>
+          </div>
+          <div class="citation" id="citation-3" onclick="highlightCitation(3)">
+            <div class="citation-number">3</div>
+            <div class="citation-content">
+              <h4>CB Insights: State of FinTech Q3 2024</h4>
+              <p>Published Oct 18, 2024 • cbinsights.com</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Evaluation Panel -->
+    <div class="evaluation-panel" id="evaluationPanel">
+      <div class="eval-header">
+        <h2>Evaluation Companion</h2>
+        <button class="collapse-btn" onclick="togglePanel()">Collapse</button>
+      </div>
+      
+      <!-- Quality Signals -->
+      <div class="signal-section">
+        <div class="signal-section-title">Quality Signals</div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot strength"></div>
+            <div class="signal-title">Strong source consensus (2)</div>
+          </div>
+          <div class="signal-body strength">
+            7 out of 8 sources agree on the 23% decline figure. High confidence in this claim.
+          </div>
+        </div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot uncertainty"></div>
+            <div class="signal-title">One source uses preliminary data</div>
+          </div>
+          <div class="signal-body uncertainty">
+            CB Insights report noted as "early estimates" - final numbers may be revised when complete data becomes available.
+          </div>
+        </div>
+        
+        <div class="signal-card expanded" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot gap"></div>
+            <div class="signal-title">Missing European data coverage</div>
+          </div>
+          <div class="signal-body gap">
+            Analysis limited to North American sources. Searched 12 European FinTech databases but found limited Q3 2024 data. This suggests either data is not yet publicly available, or regional reporting lags North America by 1-2 quarters.
+          </div>
+        </div>
+        
+        <div class="signal-card" onclick="toggleSignal(this)">
+          <div class="signal-header">
+            <div class="signal-dot assumption"></div>
+            <div class="signal-title">Assumes US market definition</div>
+          </div>
+          <div class="signal-body assumption">
+            Sources primarily define "global FinTech" based on US market categorization. European and Asian markets may categorize companies differently.
+          </div>
+        </div>
+      </div>
+      
+      <!-- Dialogue Section -->
+      <div class="dialogue-card">
+        <div class="dialogue-prompt">💬 Before using this, what's your main concern?</div>
+        <div class="prompt-buttons">
+          <button class="prompt-btn" onclick="selectConcern('source', this)">Source quality</button>
+          <button class="prompt-btn" onclick="selectConcern('completeness', this)">Completeness</button>
+          <button class="prompt-btn" onclick="selectConcern('accuracy', this)">Accuracy</button>
+          <button class="prompt-btn" onclick="selectConcern('recency', this)">Recency</button>
+        </div>
+        <div class="skip-link" onclick="skipEval()">Skip evaluation</div>
+      </div>
+      
+      <!-- Analysis Section -->
+      <div class="analysis-section" id="analysisSection">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span class="loading"></span>
+          <span class="analysis-text">Analyzing...</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="analysis-text" id="analysisText">Searching additional sources...</div>
+      </div>
+      
+      <!-- Notes Section -->
+      <div class="notes-section" id="notesSection" style="display: none;">
+        <div class="notes-title">Your Evaluation Notes (1)</div>
+        <div class="note-item">
+          <div class="note-icon warning">⚠️</div>
+          <div class="note-content">
+            <div class="note-title">Noted: Geographic limitation</div>
+            <div class="note-detail">US-focused data, European coverage gaps. Add caveat for global use.</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Confidence Section -->
+      <div class="confidence-section" id="confidenceSection" style="display: none;">
+        <div class="confidence-label">How confident are you in this answer?</div>
+        <div class="confidence-value" id="confidenceValue">80%</div>
+        <input type="range" min="0" max="100" value="80" class="slider" id="confidenceSlider" oninput="updateConfidence(this.value)">
+        <div class="confidence-meaning" id="confidenceMeaning">Good for internal use, needs caveats for clients</div>
+        <button class="action-button" onclick="completeEval()">Continue to use answer →</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const scenarios = {
+      finance: {
+        query: "What are global FinTech funding trends in Q3 2024?",
+        answer: "According to recent reports, global FinTech funding declined 23% year-over-year in Q3 2024, with total investments reaching $18.2 billion across 1,234 deals. This represents a continued slowdown from 2023's peak, though deal volume remained relatively stable compared to Q2 2024.\n\nThe decline is attributed to several factors, including macroeconomic uncertainty, rising interest rates, and increased regulatory scrutiny. Despite the overall decrease, certain sectors like embedded finance and B2B payments showed resilience with growth in their segments."
+      },
+      medical: {
+        query: "What are the latest treatments for Type 2 diabetes?",
+        answer: "Recent advances in Type 2 diabetes management include GLP-1 receptor agonists like semaglutide, which have shown significant benefits for weight loss and cardiovascular protection beyond glucose control. SGLT2 inhibitors have also demonstrated benefits for heart failure and kidney protection.\n\nCombination therapies are increasingly being used, with many patients on dual or triple therapy. The focus has shifted toward individualized treatment based on cardiovascular and renal risk factors rather than a one-size-fits-all glucose-centered approach."
+      },
+      research: {
+        query: "What are the key findings from recent climate change studies?",
+        answer: "Recent research indicates that global temperatures are rising faster than previously predicted, with particular acceleration in polar regions. Studies show that climate tipping points—irreversible shifts in Earth's systems—may be closer than once thought, particularly for permafrost thawing and ocean circulation changes.\n\nThe latest IPCC reports emphasize that limiting warming to 1.5°C is increasingly difficult and would require unprecedented global emission reductions beginning immediately."
+      }
+    };
+    
+    let currentScenario = 'finance';
+    
+    function loadScenario(scenario) {
+      currentScenario = scenario;
+      const data = scenarios[scenario];
+      
+      document.getElementById('queryText').textContent = data.query;
+      document.getElementById('answerText').textContent = data.answer;
+      document.getElementById('searchInput').value = data.query;
+      
+      // Update active button
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Reset evaluation
+      resetEvaluation();
+    }
+    
+    function toggleSignal(element) {
+      element.classList.toggle('expanded');
+    }
+    
+    function highlightCitation(num) {
+      document.querySelectorAll('.citation').forEach(c => c.classList.remove('highlighted'));
+      document.getElementById(`citation-${num}`).classList.add('highlighted');
+      setTimeout(() => {
+        document.getElementById(`citation-${num}`).classList.remove('highlighted');
+      }, 2000);
+    }
+    
+    function selectConcern(concern, btn) {
+      document.querySelectorAll('.prompt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      
+      // Show analysis
+      document.getElementById('analysisSection').classList.add('show');
+      document.getElementById('notesSection').style.display = 'block';
+      document.getElementById('confidenceSection').classList.add('show');
+      
+      // Animate progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 100) progress = 100;
+        document.getElementById('progressFill').style.width = progress + '%';
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+        }
+      }, 300);
+    }
+    
+    function updateConfidence(value) {
+      document.getElementById('confidenceValue').textContent = value + '%';
+      
+      const meanings = {
+        '0': 'Not confident - needs revision',
+        '25': 'Low confidence - verify claims',
+        '50': 'Moderate - use with caution',
+        '75': 'Good for internal use',
+        '100': 'High confidence - ready to share'
+      };
+      
+      const closest = Math.round(value / 25) * 25;
+      document.getElementById('confidenceMeaning').textContent = meanings[closest] || meanings['75'];
+    }
+    
+    function skipEval() {
+      alert('Evaluation skipped. You can evaluate this answer later.');
+      resetEvaluation();
+    }
+    
+    function completeEval() {
+      alert('✓ Evaluation complete! Your notes have been saved.');
+      resetEvaluation();
+    }
+    
+    function togglePanel() {
+      document.getElementById('evaluationPanel').classList.toggle('mobile-open');
+    }
+    
+    function resetEvaluation() {
+      document.querySelectorAll('.prompt-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById('analysisSection').classList.remove('show');
+      document.getElementById('notesSection').style.display = 'none';
+      document.getElementById('confidenceSection').classList.remove('show');
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('confidenceSlider').value = '80';
+      updateConfidence(80);
+    }
+  </script>
+</body>
+</html>
